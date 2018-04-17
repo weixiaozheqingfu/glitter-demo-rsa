@@ -3,6 +3,7 @@ package com.glitter.demo.util;
 
 import com.glitter.demo.bean.Person;
 import com.google.gson.Gson;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,22 +39,6 @@ public class RSATester3 {
 
     static {
         try {
-            // 1.准备数据
-            Person data = new Person();
-            data.setName("张三丰");
-            data.setAge(111);
-            data.setSex(new Byte("1"));
-            data.setIdNumber("110110124701016666");
-
-            Gson gson = new Gson();
-            String dataStr = gson.toJson(data);
-
-            // 2.A提取数据data的数据摘要h(data),并使用自己的私钥对摘要h(data)进行加密,生成签名sign
-//            String summary = DigestUtils.DigestUtils
-
-
-
-
             Map<String, Object> keyMapA = RSAUtils.genKeyPair();
             publicKeyA = RSAUtils.getPublicKey(keyMapA);
             privateKeyA = RSAUtils.getPrivateKey(keyMapA);
@@ -77,24 +62,49 @@ public class RSATester3 {
         testB();
     }
 
+
+    // TODO 使用base64进行数据操作。
+
     /**
      * 加密签名
      * @throws Exception
      */
     static void testA() throws Exception {
-        String source = "这是绝密";
-        System.out.println("\r正文信息:\r\n" + source);
-        byte[] data = source.getBytes();
-        // 使用B公钥加密
-        byte[] encodedData = RSAUtils.encryptByPublicKey(data, publicKeyB);
-        System.out.println("B公钥加密后的信息:\r\n" + new String(encodedData));
-        // 使用A私钥对加密信息进行签名
-        String sign = RSAUtils.sign(encodedData, privateKeyA);
-        System.out.println("数字签名信息:\r" + sign);
+        String a = "中国";
+        byte[] ab = a.getBytes();
+        String b = new String(ab);
+
+
+        // 1.准备数据
+        Person data = new Person();
+        data.setName("张三丰");
+        data.setAge(111);
+        data.setSex(new Byte("1"));
+        data.setIdNumber("110110124701016666");
+
+        Gson gson = new Gson();
+        String dataStr = gson.toJson(data);
+
+        // 2.A提取数据data的数据摘要h(data),并使用A的私钥对摘要h(data)进行加密,生成签名sign
+        String summary = DigestUtils.md5Hex(dataStr);
+        byte[] summaryBytes = summary.getBytes("UTF-8");
+        byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
+        String sign = new String(signBytes,"UTF-8");
+
+        // 3.使用B的公钥对消息体进行加密，消息体包括数据和签名。
+        Message message = new Message();
+        message.setData(data);
+        message.setSign(sign);
+        String messageJson = gson.toJson(message);
+        byte[] messageBtyes = messageJson.getBytes();
+
+        String aaa = new String(messageBtyes);
+
+        byte[] messageBtyesEncrypted = RSAUtils.encryptByPublicKey(messageBtyes,publicKeyB);
+        String messageEncrypted = new String(messageBtyesEncrypted,"UTF-8");
 
         // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
-        map.put("data",encodedData);
-        map.put("sign",sign);
+        map.put("message",messageEncrypted);
     }
 
     /**
@@ -104,22 +114,43 @@ public class RSATester3 {
      * @throws Exception
      */
     static void testB() throws Exception {
-        byte[] data = (byte[])map.get("data");
-        String sign = map.get("sign").toString();
 
-        // 使用A公钥进行验签
-        boolean flag = RSAUtils.verify(data,publicKeyA,sign);
-        // 如果验签失败,则进行相应支流的业务相应，例如抛出异常，触发报警等
-        if(!flag){
+        // 1.B接收到密文message,使用B的私钥解密message得到明文messageOriginal和数字签名sign
+        String messageEncrypted = map.get("message").toString();
+        byte[] messageBtyesEncrypted = messageEncrypted.getBytes("UTF-8");
+        byte[] messageBtyesOriginal = RSAUtils.encryptByPrivateKey(messageBtyesEncrypted,privateKeyB);
+        String messageOriginal = new String(messageBtyesOriginal,"UTF-8");
+        Gson gson = new Gson();
+        Message message = gson.fromJson(messageOriginal,Message.class);
+
+        // 2.B使用A的公钥解密数字签名sign解密得到H(data)。这是验签的一部分,解密成功说明消息是A发送的。
+        Person data = (Person) message.getData();
+        String sign = message.getSign();
+        byte[] signBytes = sign.getBytes("UTF-8");
+        byte[] summaryBytes = null;
+        String summaryA = null;
+        try{
+            summaryBytes = RSAUtils.decryptByPublicKey(signBytes,publicKeyA);
+            summaryA = new String(summaryBytes,"UTF-8");
+        }catch (Exception e){
             System.out.println("验签失败");
-            // TODO ...
+            // TODO 可以触发报警机制...
             throw new Exception("验签失败");
         }
-        // 如果验签成功,则进行数据解密
-        System.out.println("验签成功");
-        byte[] data1 = RSAUtils.decryptByPrivateKey(data,privateKeyB);
-        String result = new String(data1);
-        System.out.println("解密数据结果:"+result);
+
+        // 3.B使用相同的方法提取消息data的消息摘要h(data)
+        String dataJson = DigestUtils.md5Hex(gson.toJson(data));
+        byte[] summaryBBytes = dataJson.getBytes("UTF-8");
+        String summaryB = new String(summaryBBytes,"UTF-8");
+        // 4.B比较两个消息摘要。相同则验证成功;不同则验证失败。
+        if(!summaryA.equals(summaryB)){
+            System.out.println("验签失败,数据被篡改");
+            // TODO 可以触发报警机制...
+            throw new Exception("验签失败,数据被篡改");
+        }
+
+        // 4.B验签成功,数据data可以继续后续业务处理...
+        System.out.println("解密结果:"+dataJson);
     }
     
 }

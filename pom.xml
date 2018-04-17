@@ -30,6 +30,21 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- spring中封装了散列算法工具类,可以使用spring的 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>4.3.16.RELEASE</version>
+        </dependency>
+
+        <!-- apache旗下的commons-codec中封装了散列算法工具类,可以使用commons-codec的 -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.11</version>
+        </dependency>
+
     </dependencies>
 
     <build>
