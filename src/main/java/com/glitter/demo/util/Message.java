@@ -6,17 +6,17 @@ package com.glitter.demo.util;
 public class Message {
 
     /** 数据 */
-    private Object data;
+    private String data;
 
     /** 签名 */
     private String sign;
 
 
-    public Object getData() {
+    public String getData() {
         return data;
     }
 
-    public void setData(Object data) {
+    public void setData(String data) {
         this.data = data;
     }
 
