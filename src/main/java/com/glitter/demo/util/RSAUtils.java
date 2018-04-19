@@ -96,6 +96,7 @@ public class RSAUtils {
 	 */
 	public static Map<String, Object> genKeyPair() throws Exception {
 		KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM);
+		// 使用2048更安全，但是现有代码运行会报错,具体用时可以再调整,本篇时间较紧，重在演示场景及原理，1024强度基本够用。
 		keyPairGen.initialize(1024);
 		KeyPair keyPair = keyPairGen.generateKeyPair();
 		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();

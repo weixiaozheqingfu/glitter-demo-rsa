@@ -8,6 +8,9 @@ import java.security.SecureRandom;
 
 public class AES128 {
 
+	// 切换AES下的几种加密模式可以参考博文https://www.cnblogs.com/dava/p/6416638.html
+
+
 	/**
 	 * 加密
 	 * 
@@ -18,11 +21,15 @@ public class AES128 {
 	public static String encrypt(String content, String strKey) {
 
 		try {
-			Cipher cipher = Cipher.getInstance("AES");// 创建密码器
+			// 创建密码器
+			Cipher cipher = Cipher.getInstance("AES");
+			// 初始化
+			cipher.init(Cipher.ENCRYPT_MODE, genKey(strKey));
+
 			byte[] byteContent = content.getBytes("utf-8");
-			cipher.init(Cipher.ENCRYPT_MODE, genKey(strKey));// 初始化
 			byte[] result = cipher.doFinal(byteContent);
-			return parseByte2HexStr(result); // 加密
+			// 加密
+			return parseByte2HexStr(result);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -41,10 +48,15 @@ public class AES128 {
 
 		try {
 			byte[] decryptFrom = parseHexStr2Byte(content);
-			Cipher cipher = Cipher.getInstance("AES");// 创建密码器
-			cipher.init(Cipher.DECRYPT_MODE, genKey(strKey));// 初始化
+
+			// 创建密码器
+			Cipher cipher = Cipher.getInstance("AES");
+			// 初始化
+			cipher.init(Cipher.DECRYPT_MODE, genKey(strKey));
+
 			byte[] result = cipher.doFinal(decryptFrom);
-			return new String(result); // 加密
+			// 加密
+			return new String(result);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

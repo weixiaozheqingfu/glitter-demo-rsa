@@ -31,6 +31,12 @@ import java.util.Map;
  * 数据量大的情况下使用RSA加密耗时很长。
  *
  *
+ * 为什么叫做签名，很形象，只有发送者的私钥进行的加密，只有发送者的公钥可以解开。发送者的私钥加密后的数据就相当于是发送者对数据的签名。
+ * 当收到数据后，一验证，就知道是发送者发送的消息，而不是其他人进行伪造的。
+ *
+ * 就好像一个我们对一个合同签名后，只要进行笔记验证，就可以知道该签名是否为签名者真迹。
+ *
+ *
  * by limengjun
  */
 public class RSATester4 {
@@ -121,7 +127,7 @@ public class RSATester4 {
      */
     static void testB() throws Exception {
 
-        // 1.B接收到密文message,使用B的私钥解密message得到明文messageOriginal和数字签名sign
+        // 1.B接收到message信息
         String messageEncrypted = String.valueOf(map.get("message"));
         // 解码
         byte[] messageBytesEncrypted = RSAUtils.decode(messageEncrypted);
