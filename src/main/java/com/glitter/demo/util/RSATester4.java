@@ -28,6 +28,8 @@ import java.util.Map;
  * 演示场景，数据明文，就加数字签名，目的是防止数据被篡改，但是数据本身并不敏感，并非对外不可见，数据不是秘密，但要保证传输的安全可靠性。
  * 同时保证数据的来源可靠性。
  *
+ * 数据量大的情况下使用RSA加密耗时很长。
+ *
  *
  * by limengjun
  */
@@ -60,19 +62,17 @@ public class RSATester4 {
     }
     
     public static void main(String[] args) throws Exception {
-        // 加密签名
+        // 签名
         testA();
-        // 验签解密
+        // 验签
         testB();
     }
 
 
-
-
     /**
-     * 加密签名
+     * 签名
      *
-     * Message:1.json化，2.加密，3.encode
+     * Message:1.json化，2.encode
      * data:json化后再encode
      * summary:md5原始数据
      * sign:encode后的数据
@@ -95,7 +95,6 @@ public class RSATester4 {
         String summary = DigestUtils.md5Hex(dataStr);
         byte[] summaryBytes = summary.getBytes("UTF-8");
         byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
-//        String sign = new String(signBytes,"UTF-8");
         String sign = RSAUtils.encode(signBytes);
 
         // 3.使用B的公钥对消息体进行加密，消息体包括数据和签名。
@@ -103,18 +102,16 @@ public class RSATester4 {
         message.setData(dataStr1);
         message.setSign(sign);
         String messageJson = gson.toJson(message);
-        byte[] messageBytes = messageJson.getBytes("UTF-8");
-        byte[] messageBytesEncrypted = RSAUtils.encryptByPublicKey(messageBytes,publicKeyB);
-        String messageEncrypted = RSAUtils.encode(messageBytesEncrypted);
+        String messageEncrypted = RSAUtils.encode(messageJson.getBytes("UTF-8"));
 
         // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
         map.put("message",messageEncrypted);
     }
 
     /**
-     * 验签解密
+     * 验签
      *
-     * Message:1.解码decode,2.再解密数据，3.再json数据
+     * Message:1.解码decode,2.再json数据
      * data:1.先解码decode数据，2.再json转对象。
      * sign:encode后的数据  1.解码decode数据，
      * summary:md5原始数据
@@ -128,9 +125,7 @@ public class RSATester4 {
         String messageEncrypted = String.valueOf(map.get("message"));
         // 解码
         byte[] messageBytesEncrypted = RSAUtils.decode(messageEncrypted);
-        // 解密
-        byte[] messageBytesOriginal = RSAUtils.decryptByPrivateKey(messageBytesEncrypted,privateKeyB);
-        String messageOriginal = new String(messageBytesOriginal,"UTF-8");
+        String messageOriginal = new String(messageBytesEncrypted,"UTF-8");
         Gson gson = new Gson();
         Message message = gson.fromJson(messageOriginal,Message.class);
 
