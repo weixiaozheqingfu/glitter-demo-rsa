@@ -3,10 +3,8 @@ package com.glitter.demo.util;
 
 import com.glitter.demo.bean.Person;
 import com.google.gson.Gson;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,9 +25,13 @@ import java.util.Map;
  *
  * B使用publicKeyA验签，如果验签通过则使用privateKeyB解密
  *
+ * 演示场景，数据明文，就加数字签名，目的是防止数据被篡改，但是数据本身并不敏感，并非对外不可见，数据不是秘密，但要保证传输的安全可靠性。
+ * 同时保证数据的来源可靠性。
+ *
+ *
  * by limengjun
  */
-public class RSATester3 {
+public class RSATester4 {
 
     static String publicKeyA;
     static String privateKeyA;

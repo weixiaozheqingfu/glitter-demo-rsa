@@ -3,10 +3,8 @@ package com.glitter.demo.util;
 
 import com.glitter.demo.bean.Person;
 import com.google.gson.Gson;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,9 +25,26 @@ import java.util.Map;
  *
  * B使用publicKeyA验签，如果验签通过则使用privateKeyB解密
  *
+ * 演示场景，数据使用加密强度高安全性高可靠性高不易破解的对称加密算法进行加密，特点，比非对称加密速度快，尤其是数据量大的时候，
+ * 缺点，对称加密为了保证秘钥的安全性，通常使用动态秘钥进行加密和解密，即秘钥每次都只使用一次，不会长期持有，因为秘钥是双方持有的，
+ * 有任何一方泄露秘钥，则加密数据都是不安全的，长期持有固定对称秘钥，会大大降低秘钥安全性。
+ *
+ * 那么每次如果使用动态秘钥的话，就需要加密方每次都要生成对称秘钥并将加密数据和对称秘钥同时传送给数据接收方，问题就是要传输过程中对称秘钥的安全性，
+ * 保证了对称秘钥的安全可靠，也就保证了数据的安全可靠（前提是安全可靠不易被破解的对称加密算法）。
+ * 很明显对称秘钥不可以明文进行传输，有了RSA，我们可以将二者完美结合起来。可以使用RSA对对称秘钥进行加密，这样就能保证秘钥的安全可靠同时也保证了数据的加密速度。
+ * 可谓是完美的结合，重要的事情再说一遍，前提是安全可靠不易被破解的对称加密算法，如果对称加密算法不行，人家不用破解你使用RSA加密的秘钥，直接破解你对称加密的数据就好了。
+ *
+ *
+ * 锦上添花，更进一步增加安全性：
+ * 1.Message信息中包括（String data,String secretKey,String sign）; 其中data是对称加密后的数据，secretKey是RSA加密后的对称秘钥，sign是签名数据。
+ * 2.sign的签名规则可以设定复杂一点，例如
+ *  （data+secretKey原始未加密时的对称秘钥值+只有双方一对一都知道的业务码，如appid+appsecret（该项非必须，但有安全性更高））做信息摘要，
+ *  进而进一步对信息摘要做数字签名（可以手动使用发送方私钥机密的方式来手动实现对摘要信息的数字签名）
+ *
+ *
  * by limengjun
  */
-public class RSATester3 {
+public class RSATester5 {
 
     static String publicKeyA;
     static String privateKeyA;
