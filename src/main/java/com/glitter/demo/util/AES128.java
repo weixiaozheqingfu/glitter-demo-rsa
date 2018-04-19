@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 public class AES128 {
 
 	// 切换AES下的几种加密模式可以参考博文https://www.cnblogs.com/dava/p/6416638.html
+	// https://www.cnblogs.com/lianghui66/archive/2013/03/07/2948494.html
 
 
 	/**
