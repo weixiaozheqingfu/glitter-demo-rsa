@@ -62,25 +62,20 @@ public class RSATester2 {
      * @throws Exception
      */
     static void testA() throws Exception {
-//        String source = "这是绝密";
-//        System.out.println("\r正文信息:\r\n" + source);
-//        byte[] data = source.getBytes();
-//        // 使用B公钥加密
-//        byte[] encodedData = RSAUtils.encryptByPublicKey(data, publicKeyB);
-//        System.out.println("B公钥加密后的信息:\r\n" + new String(encodedData));
-//        // 使用A私钥对加密信息进行签名
-//        String sign = RSAUtils.sign(encodedData, privateKeyA);
-//        System.out.println("数字签名信息:\r" + sign);
-//
-//        // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
-//        map.put("data",encodedData);
-//        map.put("sign",sign);
-
-
+        String source = "这是绝密";
+        System.out.println("\r正文信息:\r\n" + source);
+        byte[] data = source.getBytes();
         // 使用B公钥加密
-        byte[] encodedData = RSAUtils.encryptByPublicKey("中国".getBytes(), publicKeyB);
-        byte[] data1 = RSAUtils.decryptByPrivateKey(encodedData,privateKeyB);
-        String result = new String(data1);
+        byte[] encodedData = RSAUtils.encryptByPublicKey(data, publicKeyB);
+        System.out.println("B公钥加密后的信息:\r\n" + new String(encodedData));
+        // 使用A私钥对加密信息进行签名
+        String sign = RSAUtils.sign(encodedData, privateKeyA);
+        System.out.println("数字签名信息:\r" + sign);
+
+        // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
+        map.put("data",encodedData);
+        map.put("sign",sign);
+
     }
 
     /**
