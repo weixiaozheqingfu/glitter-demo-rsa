@@ -155,6 +155,8 @@ public class RSATester6 {
      * @throws Exception
      */
     static void testB() throws Exception {
+        // TODO 需要进一步优化注释和代码编排,可参考RSATester5......
+
         // 1.解码message
         String messageEncode = String.valueOf(map.get("message"));
         byte[] messageDecodeBytes = RSAUtils.decode(messageEncode);
