@@ -178,7 +178,7 @@ public class RSATester6 {
 
         String secretKeyStr = new String(secretKeyDecodeBytes,"UTF-8");
 
-        // 3.使用发送者公钥解密sign,能解密成功,得到数据摘要,说明验签第一步成功即消息确实是A发送的。
+        // 3.验签:使用发送者公钥解密sign,能解密成功,得到数据摘要,说明验签第一步成功即消息确实是A发送的。
         byte[] summaryBytes = null;
         String summaryAStr = null;
         try{
