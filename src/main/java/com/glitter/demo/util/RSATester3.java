@@ -87,20 +87,19 @@ public class RSATester3 {
         data.setIdNumber("110110124701016666");
 
         Gson gson = new Gson();
-        String dataStr = gson.toJson(data);
-        String dataStr1 = RSAUtils.encode(dataStr.getBytes());
+        String dataJson = gson.toJson(data);
+        String dataEncode = RSAUtils.encode(dataJson.getBytes());
 
         // 2.A提取数据data的数据摘要h(data),并使用A的私钥对摘要h(data)进行加密,生成签名sign(经过base64的encode编码后的数据)
-        String summary = DigestUtils.md5Hex(dataStr);
-        byte[] summaryBytes = summary.getBytes("UTF-8");
+        String summaryStr = DigestUtils.md5Hex(dataJson);
+        byte[] summaryBytes = summaryStr.getBytes("UTF-8");
         byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
-//        String sign = new String(signBytes,"UTF-8");
-        String sign = RSAUtils.encode(signBytes);
+        String signEncode = RSAUtils.encode(signBytes);
 
         // 3.使用B的公钥对消息体进行加密，消息体包括数据和签名。
         Message message = new Message();
-        message.setData(dataStr1);
-        message.setSign(sign);
+        message.setData(dataEncode);
+        message.setSign(signEncode);
         String messageJson = gson.toJson(message);
         byte[] messageBytes = messageJson.getBytes("UTF-8");
         byte[] messageBytesEncrypted = RSAUtils.encryptByPublicKey(messageBytes,publicKeyB);

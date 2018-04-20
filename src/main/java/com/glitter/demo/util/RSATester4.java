@@ -95,24 +95,24 @@ public class RSATester4 {
         data.setIdNumber("110110124701016666");
 
         Gson gson = new Gson();
-        String dataStr = gson.toJson(data);
-        String dataStr1 = RSAUtils.encode(dataStr.getBytes());
+        String dataJson = gson.toJson(data);
+        String dataEncode = RSAUtils.encode(dataJson.getBytes());
 
         // 2.A提取数据data的数据摘要h(data),并使用A的私钥对摘要h(data)进行加密,生成签名sign(经过base64的encode编码后的数据)
-        String summary = DigestUtils.md5Hex(dataStr);
-        byte[] summaryBytes = summary.getBytes("UTF-8");
+        String summaryStr = DigestUtils.md5Hex(dataJson);
+        byte[] summaryBytes = summaryStr.getBytes("UTF-8");
         byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
-        String sign = RSAUtils.encode(signBytes);
+        String signEncode = RSAUtils.encode(signBytes);
 
         // 3.使用B的公钥对消息体进行加密，消息体包括数据和签名。
-        Message message = new Message();
-        message.setData(dataStr1);
-        message.setSign(sign);
-        String messageJson = gson.toJson(message);
-        String messageEncrypted = RSAUtils.encode(messageJson.getBytes("UTF-8"));
+        Message messageObj = new Message();
+        messageObj.setData(dataEncode);
+        messageObj.setSign(signEncode);
+        String messageJson = gson.toJson(messageObj);
+        String messageEncode = RSAUtils.encode(messageJson.getBytes("UTF-8"));
 
         // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
-        map.put("message",messageEncrypted);
+        map.put("message",messageEncode);
     }
 
     /**
@@ -129,24 +129,27 @@ public class RSATester4 {
     static void testB() throws Exception {
 
         // 1.B接收到message信息
-        String messageEncrypted = String.valueOf(map.get("message"));
+        String messageEncode = String.valueOf(map.get("message"));
         // 解码
-        byte[] messageBytesEncrypted = RSAUtils.decode(messageEncrypted);
-        String messageOriginal = new String(messageBytesEncrypted,"UTF-8");
+        byte[] messageDecodeBytes = RSAUtils.decode(messageEncode);
+        String messageJson = new String(messageDecodeBytes,"UTF-8");
         Gson gson = new Gson();
-        Message message = gson.fromJson(messageOriginal,Message.class);
+        Message messageObj = gson.fromJson(messageJson,Message.class);
 
         // 2.B使用A的公钥解密数字签名sign解密得到H(data)。这是验签的一部分,解密成功说明消息是A发送的。
-        String data = message.getData();
-        String dataJson = new String(RSAUtils.decode(data));
+        String dataEncode = messageObj.getData();
+        byte[] dataDecodeBytes = RSAUtils.decode(dataEncode);
+        String dataJson = new String(dataDecodeBytes);
 
-        String sign = message.getSign();
-        byte[] signBytes = RSAUtils.decode(sign);
+        String signEncode = messageObj.getSign();
+        // 获取被加密的签名数据
+        byte[] signDecodeBytes = RSAUtils.decode(signEncode);
+
         byte[] summaryBytes = null;
-        String summaryA = null;
+        String summaryAStr = null;
         try{
-            summaryBytes = RSAUtils.decryptByPublicKey(signBytes,publicKeyA);
-            summaryA = new String(summaryBytes,"UTF-8");
+            summaryBytes = RSAUtils.decryptByPublicKey(signDecodeBytes,publicKeyA);
+            summaryAStr = new String(summaryBytes,"UTF-8");
         }catch (Exception e){
             System.out.println("验签失败");
             // TODO 可以触发报警机制...
@@ -154,9 +157,9 @@ public class RSATester4 {
         }
 
         // 3.B使用相同的方法提取消息data的消息摘要h(data)
-        String summaryB = DigestUtils.md5Hex(dataJson);
+        String summaryBStr = DigestUtils.md5Hex(dataJson);
         // 4.B比较两个消息摘要。相同则验证成功;不同则验证失败。
-        if(!summaryA.equals(summaryB)){
+        if(!summaryAStr.equals(summaryBStr)){
             System.out.println("验签失败,数据被篡改");
             // TODO 可以触发报警机制...
             throw new Exception("验签失败,数据被篡改");

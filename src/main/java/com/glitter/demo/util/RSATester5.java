@@ -2,12 +2,14 @@ package com.glitter.demo.util;
 
 
 import com.glitter.demo.bean.Message;
+import com.glitter.demo.bean.Message1;
 import com.glitter.demo.bean.Person;
 import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 名词说明：
@@ -22,7 +24,7 @@ import java.util.Map;
  *
  *
  * 演示A与B进行通信过程。
- * A使用publicKeyB加密source，并使用privateKeyA做数字签名
+ * A使用publicKeyB加密data，并使用privateKeyA做数字签名
  *
  * B使用publicKeyA验签，如果验签通过则使用privateKeyB解密
  *
@@ -58,6 +60,9 @@ public class RSATester5 {
 
     static String publicKeyB;
     static String privateKeyB;
+
+    static String appId = "123";
+    static String appSecret = "abc";
 
     static Map<String,Object> map = new HashMap<>();
 
@@ -108,27 +113,38 @@ public class RSATester5 {
         data.setIdNumber("110110124701016666");
 
         Gson gson = new Gson();
-        String dataStr = gson.toJson(data);
-        String dataStr1 = RSAUtils.encode(dataStr.getBytes());
+        String dataJson = gson.toJson(data);
 
-        // 2.A提取数据data的数据摘要h(data),并使用A的私钥对摘要h(data)进行加密,生成签名sign(经过base64的encode编码后的数据)
-        String summary = DigestUtils.md5Hex(dataStr);
-        byte[] summaryBytes = summary.getBytes("UTF-8");
+        // 2.对数据进行AES128位对称加密
+        String secretKey = UUID.randomUUID().toString();
+        String dataEncryptStr = AES128.encrypt(dataJson,secretKey);
+        String dataEncode = RSAUtils.encode(dataEncryptStr.getBytes());
+
+        // 3.对对称秘钥进行RSA加密
+        byte[] secretKeyBytes = secretKey.getBytes("UTF-8");
+        byte[] secretKeyBytesEncrypted = RSAUtils.encryptByPublicKey(secretKeyBytes,publicKeyB);
+        String secretKeyEncode = RSAUtils.encode(secretKeyBytesEncrypted);
+
+        // 4.对数据和秘钥总体做数据摘要
+        String summaryStr = DigestUtils.md5Hex(dataJson + secretKey + appId + appSecret);
+        byte[] summaryBytes = summaryStr.getBytes("UTF-8");
+
+        // 5.对数据摘要进行私钥签名
         byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
-//        String sign = new String(signBytes,"UTF-8");
-        String sign = RSAUtils.encode(signBytes);
+        String signEncode = RSAUtils.encode(signBytes);
 
-        // 3.使用B的公钥对消息体进行加密，消息体包括数据和签名。
-        Message message = new Message();
-        message.setData(dataStr1);
-        message.setSign(sign);
-        String messageJson = gson.toJson(message);
+        // 6.将Base64编码信息发送至B
+        Message1 message1 = new Message1();
+        message1.setData(dataEncode);
+        message1.setSecretKey(secretKeyEncode);
+        message1.setSign(signEncode);
+
+        String messageJson = gson.toJson(message1);
         byte[] messageBytes = messageJson.getBytes("UTF-8");
-        byte[] messageBytesEncrypted = RSAUtils.encryptByPublicKey(messageBytes,publicKeyB);
-        String messageEncrypted = RSAUtils.encode(messageBytesEncrypted);
+        String messageEncode = RSAUtils.encode(messageBytes);
 
-        // 将加密信息及数字签名发送至B,此处仅为演示故将信息放入map中进行数据传递。
-        map.put("message",messageEncrypted);
+        // 此处仅为演示故将信息放入map中进行数据传递。
+        map.put("message",messageEncode);
     }
 
     /**
