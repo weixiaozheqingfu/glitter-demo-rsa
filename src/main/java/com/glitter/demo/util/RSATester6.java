@@ -4,6 +4,7 @@ package com.glitter.demo.util;
 import com.glitter.demo.bean.Message;
 import com.glitter.demo.bean.Msg;
 import com.glitter.demo.bean.Person;
+import com.glitter.demo.bean.Sign;
 import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -53,7 +54,7 @@ import java.util.UUID;
  *
  * by limengjun
  */
-public class RSATester5 {
+public class RSATester6 {
 
     static String publicKeyA;
     static String privateKeyA;
@@ -113,7 +114,8 @@ public class RSATester5 {
         // 2.对数据进行AES128位对称加密
         String secretKey = UUID.randomUUID().toString();
         String dataEncryptStr = AES128.encrypt(dataJson,secretKey);
-        String dataEncode = RSAUtils.encode(dataEncryptStr.getBytes());
+        byte[] dataEncryptStrBytes = dataEncryptStr.getBytes("UTF-8");
+        String dataEncode = RSAUtils.encode(dataEncryptStrBytes);
 
         // 3.对数据和秘钥总体做数据摘要
         String summaryStr = DigestUtils.md5Hex(dataJson + secretKey + appId + appSecret);
@@ -123,23 +125,27 @@ public class RSATester5 {
         byte[] signBytes = RSAUtils.encryptByPrivateKey(summaryBytes,privateKeyA);
         String signEncode = RSAUtils.encode(signBytes);
 
-        // 5.对对称秘钥进行RSA加密
-        byte[] secretKeyBytes = secretKey.getBytes("UTF-8");
-        byte[] secretKeyBytesEncrypted = RSAUtils.encryptByPublicKey(secretKeyBytes,publicKeyB);
-        String secretKeyEncode = RSAUtils.encode(secretKeyBytesEncrypted);
+        // 5.对对称秘钥和签名进行RSA加密
+        Sign signObj = new Sign();
+        signObj.setSecretKey(RSAUtils.encode(secretKey.getBytes()));
+        signObj.setSign(signEncode);
+        String signObjJson = gson.toJson(signObj);
+
+        byte[] signObjBytes = signObjJson.getBytes("UTF-8");
+        byte[] signObjBytesEncrypted = RSAUtils.encryptByPublicKey(signObjBytes,publicKeyB);
+        String signObjEncode = RSAUtils.encode(signObjBytesEncrypted);
 
         // 6.将Base64编码信息发送至B
-        Msg msg = new Msg();
-        msg.setData(dataEncode);
-        msg.setSecretKey(secretKeyEncode);
-        msg.setSign(signEncode);
+        Message message = new Message();
+        message.setData(dataEncode);
+        message.setSign(signObjEncode);
 
-        String msgJson = gson.toJson(msg);
-        byte[] msgBytes = msgJson.getBytes("UTF-8");
-        String msgEncode = RSAUtils.encode(msgBytes);
+        String messageJson = gson.toJson(message);
+        byte[] messaggBytes = messageJson.getBytes("UTF-8");
+        String messaggEncode = RSAUtils.encode(messaggBytes);
 
         // 此处仅为演示故将信息放入map中进行数据传递。
-        map.put("message",msgEncode);
+        map.put("message",messaggEncode);
     }
 
     /**
@@ -149,45 +155,66 @@ public class RSATester5 {
      * @throws Exception
      */
     static void testB() throws Exception {
-        // TODO ......
-
-        // 1.B接收到密文message,使用B的私钥解密message得到明文messageOriginal和数字签名sign
-        String messageEncrypted = String.valueOf(map.get("message"));
-        // 解码
-        byte[] messageBytesEncrypted = RSAUtils.decode(messageEncrypted);
-        // 解密
-        byte[] messageBytesOriginal = RSAUtils.decryptByPrivateKey(messageBytesEncrypted,privateKeyB);
-        String messageOriginal = new String(messageBytesOriginal,"UTF-8");
+        // 1.解码message
+        String messageEncode = String.valueOf(map.get("message"));
+        byte[] messageDecodeBytes = RSAUtils.decode(messageEncode);
+        String messageJson = new String(messageDecodeBytes,"UTF-8");
         Gson gson = new Gson();
-        Message message = gson.fromJson(messageOriginal,Message.class);
+        Message message = gson.fromJson(messageJson,Message.class);
 
-        // 2.B使用A的公钥解密数字签名sign解密得到H(data)。这是验签的一部分,解密成功说明消息是A发送的。
-        String data = message.getData();
-        String dataJson = new String(RSAUtils.decode(data));
+        // 2.解码sign,RSA解密signObj,得到对称秘钥secretKey和签名数据sign
+        String signObjEncode = message.getSign();
+        byte[] signObjDecodeBytes = RSAUtils.decode(signObjEncode);
+        byte[] signObjBytes = RSAUtils.decryptByPrivateKey(signObjDecodeBytes,privateKeyB);
 
-        String sign = message.getSign();
-        byte[] signBytes = RSAUtils.decode(sign);
+        String signObjJson = new String(signObjBytes);
+        Sign signObj = gson.fromJson(signObjJson,Sign.class);
+
+        String signEncode = signObj.getSign();
+        String secretKeyEncode = signObj.getSecretKey();
+
+        byte[] signDecodeBytes = RSAUtils.decode(signEncode);
+        byte[] secretKeyDecodeBytes = RSAUtils.decode(secretKeyEncode);
+
+        String secretKeyStr = new String(secretKeyDecodeBytes,"UTF-8");
+
+        // 3.使用发送者公钥解密sign,能解密成功,得到数据摘要,说明验签第一步成功即消息确实是A发送的。
         byte[] summaryBytes = null;
-        String summaryA = null;
+        String summaryAStr = null;
         try{
-            summaryBytes = RSAUtils.decryptByPublicKey(signBytes,publicKeyA);
-            summaryA = new String(summaryBytes,"UTF-8");
+            summaryBytes = RSAUtils.decryptByPublicKey(signDecodeBytes,publicKeyA);
+            summaryAStr = new String(summaryBytes,"UTF-8");
         }catch (Exception e){
-            System.out.println("验签失败");
             // TODO 可以触发报警机制...
             throw new Exception("验签失败");
         }
 
-        // 3.B使用相同的方法提取消息data的消息摘要h(data)
-        String summaryB = DigestUtils.md5Hex(dataJson);
-        // 4.B比较两个消息摘要。相同则验证成功;不同则验证失败。
-        if(!summaryA.equals(summaryB)){
-            System.out.println("验签失败,数据被篡改");
+        // 4.解码data,并解密data
+        String dataJson = null;
+        try{
+            String dataEncode = message.getData();
+            byte[] dataEncryptStrBytes = RSAUtils.decode(dataEncode);
+            String dataEncryptStr = new String(dataEncryptStrBytes);
+            dataJson = AES128.decrypt(dataEncryptStr,secretKeyStr);
+        }catch (Exception e){
             // TODO 可以触发报警机制...
-            throw new Exception("验签失败,数据被篡改");
+            throw new Exception("解密失败");
         }
 
-        // 4.B验签成功,数据data可以继续后续业务处理...
+        // 5.接收方拼接数据摘要
+        String summaryBStr = DigestUtils.md5Hex(dataJson + secretKeyStr + appId + appSecret);
+
+        // 6.验签第二步，进一步比对信息摘要，验证数据是否被篡改
+        try{
+            if(!summaryAStr.equals(summaryBStr)){
+                throw new Exception("验签失败,数据被篡改");
+            }
+        }catch (Exception e){
+            // TODO 可以触发报警机制...
+            throw e;
+        }
+
+        // 7.得到数据data可以继续后续业务处理...
         System.out.println("解密结果:"+dataJson);
     }
     
