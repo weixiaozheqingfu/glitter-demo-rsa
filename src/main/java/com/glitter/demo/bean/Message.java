@@ -1,4 +1,4 @@
-package com.glitter.demo.util;
+package com.glitter.demo.bean;
 
 /**
  * Created by Administrator on 2018/4/17.

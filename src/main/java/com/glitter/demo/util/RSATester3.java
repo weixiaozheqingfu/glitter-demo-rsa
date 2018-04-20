@@ -1,6 +1,7 @@
 package com.glitter.demo.util;
 
 
+import com.glitter.demo.bean.Message;
 import com.glitter.demo.bean.Person;
 import com.google.gson.Gson;
 import org.apache.commons.codec.binary.Base64;
