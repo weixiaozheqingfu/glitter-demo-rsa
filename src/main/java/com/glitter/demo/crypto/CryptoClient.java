@@ -1,20 +1,20 @@
 package com.glitter.demo.crypto;
 
-import com.google.common.collect.Maps;
-import com.syswin.systoon.framework.security.crypto.sm.sm3.SM3Digest;
-import com.syswin.systoon.framework.security.crypto.sm.sm4.SM4Coder;
-import com.syswin.systoon.framework.util.HexUtils;
+import com.glitter.demo.crypto.sm.sm3.SM3Digest;
+import com.glitter.demo.crypto.sm.sm4.SM4Coder;
+//import com.google.common.collect.Maps;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.encoders.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class CryptoClient {
 	
-  private static final Logger logger = LoggerFactory.getLogger(CryptoClient.class);
+//  private static final Logger logger = LoggerFactory.getLogger(CryptoClient.class);
 
   public static final String CHARSET = "UTF-8";
   
@@ -25,7 +25,7 @@ public class CryptoClient {
 			byte[] encrypt = AES256Coder.encrypt(bytes, aesKey);
 			return HexUtils.byteArray2HexStr(encrypt);
 		} catch (Exception e) {
-			logger.error("AES encrypt error: " + e.getMessage(), e);
+//			logger.error("AES encrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -37,7 +37,7 @@ public class CryptoClient {
 			byte[] decrypt = AES256Coder.decrypt(bytes, aesKey);
 			return new String(decrypt);
 		} catch (Exception e) {
-			logger.error("AES decrypt error: " + e.getMessage(), e);
+//			logger.error("AES decrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -51,7 +51,7 @@ public class CryptoClient {
 			}
 			return Base64.encodeBase64String(encrypt);
 		} catch (Exception e) {
-			logger.error("DES encrypt error: " + e.getMessage(), e);
+//			logger.error("DES encrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -64,7 +64,7 @@ public class CryptoClient {
 			byte[] encrypt = DESCoder.decrypt(encodeBase64, md5);
 			return new String(encrypt, CHARSET);
 		} catch (Exception e) {
-			logger.error("DES decrypt error: " + e.getMessage(), e);
+//			logger.error("DES decrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -79,7 +79,7 @@ public class CryptoClient {
 			}
 			return Base64.encodeBase64String(encrypt);
 		} catch (Exception e) {
-			logger.error("SM4 encrypt error: " + e.getMessage(), e);
+//			logger.error("SM4 encrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -92,7 +92,7 @@ public class CryptoClient {
 					.getBytes(CHARSET));
 			return sm4.decryptData_ECB(new String(encodeBase64, CHARSET));
 		} catch (Exception e) {
-			logger.error("SM4 decrypt error: " + e.getMessage(), e);
+//			logger.error("SM4 decrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -105,7 +105,7 @@ public class CryptoClient {
 			}
 			return Base64.encodeBase64String(encrypt);
 		} catch (Exception e) {
-			logger.error("RSA encrypt error: " + e.getMessage(), e);
+//			logger.error("RSA encrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -117,7 +117,7 @@ public class CryptoClient {
 			byte[] encrypt = RSACoder.decryptByPrivateKey(encodeBase64, key);
 			return new String(encrypt, CHARSET);
 		} catch (Exception e) {
-			logger.error("RSA decrypt error: " + e.getMessage(), e);
+//			logger.error("RSA decrypt error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -125,12 +125,12 @@ public class CryptoClient {
 	public static Map<String, String> genRSAKeyMap(){
 		try {
 			Map<String, Object> keys = RSACoder.initKey();
-			Map<String, String> keyMap = Maps.newHashMap();
+			Map<String, String> keyMap = new HashMap<>();
 			keyMap.put("pubKey", RSACoder.getPublicKey(keys));
 			keyMap.put("privateKey", RSACoder.getPrivateKey(keys));
 			return keyMap;
 		} catch (Exception e) {
-			logger.error("RSA key generated error: " + e.getMessage(), e);
+//			logger.error("RSA key generated error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -139,7 +139,7 @@ public class CryptoClient {
 		try {
 			return MD5Coder.md5(data);
 		} catch (Exception e) {
-			logger.error("MD5 digest error: " + e.getMessage(), e);
+//			logger.error("MD5 digest error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -148,7 +148,7 @@ public class CryptoClient {
 		try {
 			return SHACoder.sha256(data);
 		} catch (Exception e) {
-			logger.error("SHA digest error: " + e.getMessage(), e);
+//			logger.error("SHA digest error: " + e.getMessage(), e);
 		}
 		return null;
 	}
@@ -162,7 +162,7 @@ public class CryptoClient {
 			digest.doFinal(sign, 0);
 			return new String(Hex.encode(sign), CHARSET);
 		} catch (Exception e) {
-			logger.error("SM3 digest error: " + e.getMessage(), e);
+//			logger.error("SM3 digest error: " + e.getMessage(), e);
 		}
 		return null;
 	}
